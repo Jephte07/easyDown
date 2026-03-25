@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 require('dotenv').config();
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
+process.env.FFMPEG_PATH = ffmpegInstaller.path;
 
 const VideoRequest = require('./models/VideoRequest');
 
@@ -15,8 +17,18 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Dossier temporaire dynamique
+const tempDirStatic = os.platform() === 'win32' 
+  ? path.join(__dirname, 'temp') 
+  : '/tmp/easydown';
+
 // Servir statiquement les fichiers générés
-app.use('/download', express.static(path.join(__dirname, 'temp')));
+app.use('/download', express.static(tempDirStatic));
+
+// Route racine pour vérifier que le serveur fonctionne
+app.get('/', (req, res) => {
+  res.json({ message: "Le serveur EasyDown est en ligne !", status: "running" });
+});
 
 const connectDB = async () => {
   try {
@@ -34,9 +46,12 @@ connectDB();
 const runPythonScript = (scriptName, args) => {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, 'scripts', scriptName);
-    const pythonExe = os.platform() === 'win32'
-      ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
-      : path.join(__dirname, 'venv', 'bin', 'python');
+    
+    // Sur Render/Linux, on utilise généralement 'python3'. Sur Windows local, le chemin venv.
+    let pythonExe = 'python3'; 
+    if (os.platform() === 'win32') {
+      pythonExe = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
+    }
 
     const command = `"${pythonExe}" "${scriptPath}" ${args.map(a => `"${a}"`).join(' ')}`;
 
@@ -63,9 +78,12 @@ app.post('/api/generate', async (req, res) => {
   // Simulation ID (unique temp name)
   const reqId = Date.now().toString();
 
-  // Dossiers temp
-  const tempDir = path.join(__dirname, 'temp');
-  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+  // Dossiers temp (Utiliser /tmp sur Render/Linux pour les droits d'écriture)
+  const tempDir = os.platform() === 'win32' 
+    ? path.join(__dirname, 'temp') 
+    : '/tmp/easydown';
+    
+  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
   const baseMediaFile = path.join(tempDir, reqId);
 
@@ -102,10 +120,15 @@ app.post('/api/generate', async (req, res) => {
 
     console.log(`[Pipeline] Terminé avec succès ! Fichier Média prêt : ${downloadedFile}`);
 
+    // Construire l'URL de média de manière dynamique
+    const protocol = req.protocol === 'http' && req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto'] : req.protocol;
+    const host = req.get('host');
+    const mediaUrl = `${protocol}://${host}/download/${downloadedFile}`;
+
     res.json({
       message: 'Téléchargement réussi !',
       status: 'success',
-      mediaUrl: `http://localhost:${PORT}/download/${downloadedFile}`,
+      mediaUrl: mediaUrl,
       subtitles: subtitlesText
     });
 
