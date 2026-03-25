@@ -17,7 +17,7 @@ function App() {
     setSubtitles(null)
 
     try {
-      const res = await fetch('http://localhost:5000/api/generate', {
+      const res = await fetch('https://easydown.onrender.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input, mode, fetchSubtitles })
