@@ -47,16 +47,19 @@ const runPythonScript = (scriptName, args) => {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, 'scripts', scriptName);
     
-    // Sur Render/Linux, on utilise généralement 'python3'. Sur Windows local, le chemin venv.
-    let pythonExe = 'python3'; 
+    // Détection robuste de l'exécutable Python
+    let pythonExe = 'python3'; // Par défaut sur Linux (Render)
     if (os.platform() === 'win32') {
       pythonExe = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
+      if (!fs.existsSync(pythonExe)) {
+        pythonExe = 'python'; // Fallback si pas de venv local
+      }
     }
 
     const command = `"${pythonExe}" "${scriptPath}" ${args.map(a => `"${a}"`).join(' ')}`;
 
     console.log(`Exécution : ${command}`);
-    exec(command, (error, stdout, stderr) => {
+    exec(command, { env: process.env }, (error, stdout, stderr) => {
       if (error) {
         console.error(`Erreur [${scriptName}]:`, stderr);
         return reject(error);
