@@ -17,7 +17,10 @@ function App() {
     setSubtitles(null)
 
     try {
-      const res = await fetch('https://easydown.onrender.com', {
+      const apiUrl = 'https://easydown.onrender.com/api/generate';
+      console.log("Appel API vers:", apiUrl);
+
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ input, mode, fetchSubtitles })
@@ -30,11 +33,11 @@ function App() {
         setMediaUrl(data.mediaUrl)
         setSubtitles(data.subtitles)
       } else {
-        console.error("Erreur serveur:", data.error)
+        console.error("Erreur détaillée du serveur:", data);
         setStatus('error')
       }
     } catch (err) {
-      console.error(err)
+      console.error("Erreur de connexion:", err);
       setStatus('error')
     }
   }
