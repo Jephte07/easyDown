@@ -42,29 +42,29 @@ const connectDB = async () => {
 module.exports = connectDB;
 connectDB();
 
-// Helper pour exécuter une commande Python depuis le venv local
+// Helper pour exécuter une commande Python
 const runPythonScript = (scriptName, args) => {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, 'scripts', scriptName);
     
-    // Détection robuste de l'exécutable Python
-    let pythonExe = 'python3'; // Par défaut sur Linux (Render)
+    // Détection ultra-robuste de Python (Render priorise python3)
+    let pythonExe = 'python3'; 
     if (os.platform() === 'win32') {
-      pythonExe = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
-      if (!fs.existsSync(pythonExe)) {
-        pythonExe = 'python'; // Fallback si pas de venv local
-      }
+      const venvPath = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
+      pythonExe = fs.existsSync(venvPath) ? venvPath : 'python';
     }
 
     const command = `"${pythonExe}" "${scriptPath}" ${args.map(a => `"${a}"`).join(' ')}`;
+    console.log(`[EXEC] ID: ${Date.now()} | Cmd: ${command}`);
 
-    console.log(`Exécution : ${command}`);
-    exec(command, { env: process.env }, (error, stdout, stderr) => {
+    // On passe tout l'environnement actuel pour que FFMPEG_PATH soit vu par Python/yt-dlp
+    exec(command, { env: { ...process.env, PYTHONUNBUFFERED: "1" } }, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Erreur [${scriptName}]:`, stderr);
+        console.error(`[ERREUR] ${scriptName} (Code ${error.code}):`, stderr || error.message);
         return reject(error);
       }
-      console.log(`[${scriptName} log]:`, stdout);
+      if (stderr) console.warn(`[WARN] ${scriptName}:`, stderr);
+      console.log(`[SUCCÈS] ${scriptName}:`, stdout);
       resolve(stdout);
     });
   });
