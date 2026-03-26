@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 font-sans antialiased m-0 p-0 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950;
+  }
+}
+
+@layer components {
+
+  /* Effet de verre premium */
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl relative overflow-hidden;
+  }
+
+  .glass-panel::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none;
+  }
+
+  .glass-input {
+    @apply bg-slate-800/50 border border-slate-700 text-white px-6 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all font-medium placeholder-slate-400;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-sky-500/30 transition-all transform hover:scale-[1.02] hover:shadow-sky-500/50 active:scale-[0.98];
+  }
+}
+
+/* Animations */
+@keyframes glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
+  }
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbar for Subtitles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
